@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class MainTest {
+class LivePhotoUtilsTest {
     private static final List<String> FILES = List.of(
             "a.HEIC", "a.mov",
             "b.HeIc", "b.MOV",
@@ -35,7 +35,7 @@ class MainTest {
         for (final String name : FILES) {
             Files.createFile(folder.resolve(name));
         }
-        final List<Path> result = Main.findLivePhotoVideos(folder);
+        final List<Path> result = LivePhotoUtils.findLivePhotoVideos(folder);
         found = result.stream()
                 .map((final Path p) -> p.getFileName().toString())
                 .collect(Collectors.toSet());
