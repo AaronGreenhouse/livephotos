@@ -1,17 +1,25 @@
 package aaron.examples.livephotos;
 
+import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Command-line entry point: lists the live-photo video files in a folder.
+ * Entry point. With a folder argument, lists the live-photo video files in
+ * that folder on the console. With no arguments (as when launched from the
+ * macOS app), opens a window that folders can be dropped onto.
  *
  * @see LivePhotoUtils#findLivePhotoVideos(Path)
  */
 public class Main {
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws Exception {
+        if (args.length == 0 && !GraphicsEnvironment.isHeadless()) {
+            LivePhotoWindow.launch();
+            return;
+        }
+
         if (args.length != 1) {
             System.err.println("Usage: java aaron.examples.livephotos.Main <folder>");
             System.exit(1);

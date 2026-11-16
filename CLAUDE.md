@@ -15,15 +15,20 @@ The program currently only lists the matching files. Deleting them is planned (s
 
 ## Layout
 
-- `src/main/java/aaron/examples/livephotos/Main.java` — CLI entry point and `findLivePhotoVideos(Path)`.
-- `src/test/java/aaron/examples/livephotos/MainTest.java` — JUnit 5 tests.
+- `src/main/java/aaron/examples/livephotos/LivePhotoUtils.java` — `findLivePhotoVideos(Path)`, the matching logic.
+- `src/main/java/aaron/examples/livephotos/Main.java` — entry point: CLI with a folder argument, `LivePhotoWindow` with no arguments.
+- `src/main/java/aaron/examples/livephotos/LivePhotoWindow.java` — Swing window for the macOS app; receives folders dropped on the app icon (`Desktop.setOpenFileHandler`) or the window.
+- `src/test/java/aaron/examples/livephotos/LivePhotoUtilsTest.java` — JUnit 5 tests.
+- `src/main/jpackage/Info.plist` — custom Info.plist for the macOS app (jpackage's template plus a `public.folder` document type so Finder accepts dropped folders). Keep the `DEPLOY_*` placeholders; jpackage fills them in.
 
 ## Build and test
 
 - Java 25+ (compiled with `maven.compiler.release` 25), Maven, JUnit Jupiter 5.
 - Maven is installed at `~/Applications/apache-maven-3.10.0/bin/mvn` and may not be on `PATH`.
 - Run tests: `mvn test`
-- Run the program: `mvn compile && java -cp target/classes aaron.examples.livephotos.Main <folder>`
+- Run the program: `mvn package && java -jar target/livephotos-1.0-SNAPSHOT.jar <folder>`
+- Build the drag-and-drop macOS app (macOS only): `mvn package -Pmacos-app` → `target/app/LivePhotos.app`.
+  The `macos-app` profile uses `org.panteleyev:jpackage-maven-plugin` with `--resource-dir src/main/jpackage`.
 
 ## Working style
 

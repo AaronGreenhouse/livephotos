@@ -29,7 +29,90 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>aaron.examples.livephotos.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          Builds target/app/LivePhotos.app, a self-contained macOS app that folders
+          can be dropped onto. Run on macOS with: mvn package -Pmacos-app
+        -->
+        <profile>
+            <id>macos-app</id>
+            <properties>
+                <jpackage.input>${project.build.directory}/jpackage-input</jpackage.input>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- jpackage copies everything in its input folder into the app, so give it only the jar. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy-jar-for-jpackage</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${jpackage.input}</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.build.directory}</directory>
+                                            <includes>
+                                                <include>${project.build.finalName}.jar</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <executions>
+                            <execution>
+                                <id>build-macos-app</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jpackage</goal>
+                                </goals>
+                                <configuration>
+                                    <type>APP_IMAGE</type>
+                                    <name>LivePhotos</name>
+                                    <appVersion>1.0</appVersion>
+                                    <input>${jpackage.input}</input>
+                                    <mainJar>${project.build.finalName}.jar</mainJar>
+                                    <mainClass>aaron.examples.livephotos.Main</mainClass>
+                                    <addModules>
+                                        <addModule>java.desktop</addModule>
+                                    </addModules>
+                                    <!-- Supplies the custom Info.plist that accepts folders. -->
+                                    <resourceDir>${project.basedir}/src/main/jpackage</resourceDir>
+                                    <destination>${project.build.directory}/app</destination>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
