@@ -30,11 +30,6 @@ The program currently only lists the matching files. Deleting them is planned (s
 - Build the drag-and-drop macOS app (macOS only): `mvn package -Pmacos-app` → `target/app/LivePhotos.app`.
   The `macos-app` profile uses `org.panteleyev:jpackage-maven-plugin` with `--resource-dir src/main/jpackage`.
 
-## Working style
-
-- This project uses the **Learning** output style (set via `"outputStyle": "Learning"` in `.claude/settings.json`).
-  Explain implementation choices and ask the user to write small, meaningful pieces of code for hands-on practice.
-
 ## Java coding style
 
 - Always declare variables `final` when applicable: local variables, method parameters, fields, loop variables, lambda parameters, and catch parameters that are never reassigned.
