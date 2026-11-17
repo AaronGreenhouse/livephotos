@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.desktop.OpenFilesEvent;
 import java.io.File;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -86,12 +89,28 @@ final class LivePhotoWindow {
      * Returns the text shown in the window for one searched folder.
      */
     static String formatResults(final Path folder, final List<Path> videos) {
-        // TODO(human): build the text to display for this folder's results.
+        // TODO: build the text to display for this folder's results.
         return folder + ": " + videos.size() + "\n";
     }
 
-    /** Accepts files dragged from Finder onto the window. */
+    /**
+     * Accepts files dragged from Finder onto the window, and copies the selected
+     * output text to the clipboard. Installing a custom handler replaces the text
+     * area's built-in one, so the copy side has to be provided here too.
+     */
     private final class FolderDropHandler extends TransferHandler {
+        @Override
+        public int getSourceActions(final JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(final JComponent c) {
+            final String selected = output.getSelectedText();
+            // Returning null cancels the transfer when nothing is selected.
+            return (selected == null || selected.isEmpty()) ? null : new StringSelection(selected);
+        }
+
         @Override
         public boolean canImport(final TransferSupport support) {
             return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);

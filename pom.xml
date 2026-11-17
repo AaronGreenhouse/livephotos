@@ -56,6 +56,29 @@
             </properties>
             <build>
                 <plugins>
+                    <!-- jpackage refuses to overwrite an existing app, so delete the previous build first. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <version>3.4.0</version>
+                        <executions>
+                            <execution>
+                                <id>remove-old-app</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>clean</goal>
+                                </goals>
+                                <configuration>
+                                    <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                                    <filesets>
+                                        <fileset>
+                                            <directory>${project.build.directory}/app</directory>
+                                        </fileset>
+                                    </filesets>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <!-- jpackage copies everything in its input folder into the app, so give it only the jar. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -105,8 +128,7 @@
                                     </addModules>
                                     <!-- Supplies the custom Info.plist that accepts folders. -->
                                     <resourceDir>${project.basedir}/src/main/jpackage</resourceDir>
-                                    <destination>${project.build.directory}/app</destination>
-                                </configuration>
+                                    <destination>${project.build.directory}/app</destination>                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
