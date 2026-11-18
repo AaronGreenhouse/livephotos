@@ -33,8 +33,18 @@ import javax.swing.TransferHandler;
  * itself are searched, and the results are shown in the window.
  */
 final class LivePhotoWindow {
+    private static final String HINT = "Drop a folder onto this window or onto the app icon.";
+    private static final String THINKING = "Thinking…";
+
     private final JFrame frame;
     private final JTextArea output;
+    private final JLabel status;
+
+    /**
+     * Number of {@link #processAll} batches submitted but not yet finished.
+     * Only read or written on the Swing thread.
+     */
+    private int pending;
 
     /**
      * Runs folder searches off the Swing thread. A single daemon thread keeps
@@ -49,12 +59,12 @@ final class LivePhotoWindow {
         output.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
         output.setTransferHandler(new FolderDropHandler());
 
-        final JLabel hint = new JLabel("Drop a folder onto this window or onto the app icon.");
-        hint.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        status = new JLabel(HINT);
+        status.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         frame = new JFrame("Live Photos");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(hint, BorderLayout.NORTH);
+        frame.add(status, BorderLayout.NORTH);
         frame.add(new JScrollPane(output), BorderLayout.CENTER);
         frame.setSize(700, 450);
         frame.setLocationRelativeTo(null);
@@ -81,14 +91,28 @@ final class LivePhotoWindow {
     /**
      * Searches each dropped item that is a folder. Safe to call from any thread:
      * the searching happens on {@link #searcher}, and each result is appended to
-     * the window on the Swing thread.
+     * the window on the Swing thread. The top label shows "Thinking…" until
+     * every submitted batch has finished.
      */
     private void processAll(final List<File> files) {
         final List<File> snapshot = List.copyOf(files);
+        // Posted before execute(), so it reaches the Swing thread before the task's reset below.
+        SwingUtilities.invokeLater(() -> {
+            pending++;
+            status.setText(THINKING);
+        });
         searcher.execute(() -> {
-            for (final File file : snapshot) {
-                final String text = describe(file);
-                SwingUtilities.invokeLater(() -> output.append(text));
+            try {
+                for (final File file : snapshot) {
+                    final String text = describe(file);
+                    SwingUtilities.invokeLater(() -> output.append(text));
+                }
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    if (--pending == 0) {
+                        status.setText(HINT);
+                    }
+                });
             }
         });
     }
