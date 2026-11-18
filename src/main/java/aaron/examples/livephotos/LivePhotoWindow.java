@@ -10,9 +10,12 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.desktop.OpenFilesEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.BorderFactory;
@@ -32,6 +35,13 @@ import javax.swing.TransferHandler;
 final class LivePhotoWindow {
     private final JFrame frame;
     private final JTextArea output;
+
+    /**
+     * Runs folder searches off the Swing thread. A single daemon thread keeps
+     * results in drop order and does not keep the JVM alive on exit.
+     */
+    private final ExecutorService searcher = Executors.newSingleThreadExecutor(
+            Thread.ofPlatform().name("live-photo-search").daemon().factory());
 
     private LivePhotoWindow() {
         output = new JTextArea();
@@ -64,33 +74,51 @@ final class LivePhotoWindow {
         if (Desktop.isDesktopSupported()
                 && Desktop.getDesktop().isSupported(Desktop.Action.APP_OPEN_FILE)) {
             Desktop.getDesktop().setOpenFileHandler((final OpenFilesEvent event) ->
-                    SwingUtilities.invokeLater(() -> window.processAll(event.getFiles())));
-        }
-    }
-
-    /** Searches each dropped item that is a folder. Runs on the Swing thread. */
-    private void processAll(final List<File> files) {
-        for (final File file : files) {
-            if (!file.isDirectory()) {
-                output.append("Not a folder: " + file + "\n\n");
-                continue;
-            }
-            final Path folder = file.toPath();
-            try {
-                final List<Path> videos = LivePhotoUtils.findLivePhotoVideos(folder);
-                output.append(formatResults(folder, videos));
-            } catch (final IOException e) {
-                output.append("Error reading " + folder + ": " + e.getMessage() + "\n\n");
-            }
+                    window.processAll(event.getFiles()));
         }
     }
 
     /**
-     * Returns the text shown in the window for one searched folder.
+     * Searches each dropped item that is a folder. Safe to call from any thread:
+     * the searching happens on {@link #searcher}, and each result is appended to
+     * the window on the Swing thread.
+     */
+    private void processAll(final List<File> files) {
+        final List<File> snapshot = List.copyOf(files);
+        searcher.execute(() -> {
+            for (final File file : snapshot) {
+                final String text = describe(file);
+                SwingUtilities.invokeLater(() -> output.append(text));
+            }
+        });
+    }
+
+    /** Searches one dropped item and returns the text to show for it. Does file I/O. */
+    private static String describe(final File file) {
+        if (!file.isDirectory()) {
+            return "Not a folder: " + file + "\n\n";
+        }
+        final Path folder = file.toPath();
+        try {
+            return formatResults(folder, LivePhotoUtils.findLivePhotoVideos(folder));
+        } catch (final IOException | UncheckedIOException e) {
+            return "Error reading " + folder + ": " + e.getMessage() + "\n\n";
+        }
+    }
+
+    /**
+     * Returns the text shown in the window for one searched folder: a heading
+     * line, each video's file name indented two spaces, then the total count.
      */
     static String formatResults(final Path folder, final List<Path> videos) {
-        // TODO: build the text to display for this folder's results.
-        return folder + ": " + videos.size() + "\n";
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Processing ").append(folder).append("…\n");
+        for (final Path video : videos) {
+            sb.append("  ").append(video.getFileName()).append('\n');
+        }
+        final int count = videos.size();
+        sb.append("Total: ").append(count).append(count == 1 ? " video file" : " video files").append("\n\n");
+        return sb.toString();
     }
 
     /**
