@@ -11,12 +11,13 @@ import java.awt.desktop.OpenFilesEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -74,18 +75,33 @@ final class LivePhotoWindow {
     /**
      * Creates the window and registers for folders dropped onto the app icon.
      * Call this early in {@code main}: macOS queues the launch-time "open"
-     * event until a handler is registered.
+     * event until a handler is registered. The handler is registered before
+     * the window is built, and folders that arrive early are delivered once
+     * the window exists. Returns after the window is shown.
+     *
+     * @throws ExecutionException if building the window failed
      */
-    static void launch() throws InterruptedException, InvocationTargetException {
-        final AtomicReference<LivePhotoWindow> created = new AtomicReference<>();
-        SwingUtilities.invokeAndWait(() -> created.set(new LivePhotoWindow()));
-        final LivePhotoWindow window = created.get();
+    static void launch() throws InterruptedException, ExecutionException {
+        // Queue window creation first. The Swing event queue runs tasks in the order they
+        // were posted, so every task the handler posts below runs after creation finishes.
+        final FutureTask<LivePhotoWindow> creation = new FutureTask<>(LivePhotoWindow::new);
+        SwingUtilities.invokeLater(creation);
 
         if (Desktop.isDesktopSupported()
                 && Desktop.getDesktop().isSupported(Desktop.Action.APP_OPEN_FILE)) {
-            Desktop.getDesktop().setOpenFileHandler((final OpenFilesEvent event) ->
-                    window.processAll(event.getFiles()));
+            Desktop.getDesktop().setOpenFileHandler((final OpenFilesEvent event) -> {
+                final List<File> files = event.getFiles();
+                SwingUtilities.invokeLater(() -> {
+                    // If the window could not be built, there is nowhere to show results.
+                    if (creation.state() == Future.State.SUCCESS) {
+                        creation.resultNow().processAll(files);
+                    }
+                });
+            });
         }
+
+        // Wait for the window, passing any construction error up to main.
+        creation.get();
     }
 
     /**
