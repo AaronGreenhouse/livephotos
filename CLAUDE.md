@@ -19,7 +19,8 @@ The program currently only lists the matching files. Deleting them is planned (s
 - `src/main/java/aaron/examples/livephotos/Main.java` — entry point: CLI with a folder argument; with no arguments prints usage and exits 1, unless `-Dlivephotos.gui=true` is set (the macOS app sets it), which opens `LivePhotoWindow`.
 - `src/main/java/aaron/examples/livephotos/LivePhotoWindow.java` — Swing window for the macOS app; receives folders dropped on the app icon (`Desktop.setOpenFileHandler`) or the window.
 - `src/test/java/aaron/examples/livephotos/LivePhotoUtilsTest.java` — JUnit 5 tests.
-- `src/main/jpackage/Info.plist` — custom Info.plist for the macOS app (jpackage's template plus a `public.folder` document type so Finder accepts dropped folders). Keep the `DEPLOY_*` placeholders; jpackage fills them in.
+- `src/test/java/aaron/examples/livephotos/InfoPlistTest.java` — checks `Info.plist` against the building JDK's jpackage `Info-lite.plist.template` (all keys and `DEPLOY_*` placeholders present, minimum macOS not below the template's).
+- `src/main/jpackage/Info.plist` — custom Info.plist for the macOS app (jpackage's template plus a `public.folder` document type so Finder accepts dropped folders). Keep the `DEPLOY_*` placeholders; jpackage fills them in. `LSMinimumSystemVersion` is 11.0 on purpose (the bundled runtime's real minimum; the template says 10.11). The header comment lists the template items left out on purpose.
 
 ## Build and test
 

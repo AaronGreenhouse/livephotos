@@ -1,14 +1,23 @@
 <?xml version="1.0" ?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  Custom Info.plist for LivePhotos.app, based on jpackage's Info-lite.plist.template.
-  jpackage replaces the DEPLOY_* placeholders when it builds the app.
+  Custom Info.plist for LivePhotos.app, based on JDK 26 jpackage's Info-lite.plist.template.
+  jpackage uses this file instead of its template and replaces the DEPLOY_* placeholders.
   The CFBundleDocumentTypes entry lets Finder drop folders onto the app icon.
+
+  Differences from the template, on purpose:
+  - LSMinimumSystemVersion is 11.0, the bundled runtime's real minimum (its libraries
+    are built with minos 11.0); the template's 10.11 is too low.
+  - NSMicrophoneUsageDescription is left out: the app never uses the microphone.
+  - DEPLOY_FILE_ASSOCIATIONS is left out: with file associations it would expand to a
+    second CFBundleDocumentTypes key, clashing with the one below.
+
+  InfoPlistTest checks this file against the template of the JDK running the build.
 -->
 <plist version="1.0">
  <dict>
   <key>LSMinimumSystemVersion</key>
-  <string>10.11</string>
+  <string>11.0</string>
   <key>CFBundleDevelopmentRegion</key>
   <string>en-US</string>
   <key>CFBundleAllowMixedLocalizations</key>
