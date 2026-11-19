@@ -16,7 +16,7 @@ The program currently only lists the matching files. Deleting them is planned (s
 ## Layout
 
 - `src/main/java/aaron/examples/livephotos/LivePhotoUtils.java` — `findLivePhotoVideos(Path)`, the matching logic.
-- `src/main/java/aaron/examples/livephotos/Main.java` — entry point: CLI with a folder argument, `LivePhotoWindow` with no arguments.
+- `src/main/java/aaron/examples/livephotos/Main.java` — entry point: CLI with a folder argument; with no arguments prints usage and exits 1, unless `-Dlivephotos.gui=true` is set (the macOS app sets it), which opens `LivePhotoWindow`.
 - `src/main/java/aaron/examples/livephotos/LivePhotoWindow.java` — Swing window for the macOS app; receives folders dropped on the app icon (`Desktop.setOpenFileHandler`) or the window.
 - `src/test/java/aaron/examples/livephotos/LivePhotoUtilsTest.java` — JUnit 5 tests.
 - `src/main/jpackage/Info.plist` — custom Info.plist for the macOS app (jpackage's template plus a `public.folder` document type so Finder accepts dropped folders). Keep the `DEPLOY_*` placeholders; jpackage fills them in.
@@ -28,7 +28,7 @@ The program currently only lists the matching files. Deleting them is planned (s
 - Run tests: `mvn test`
 - Run the program: `mvn package && java -jar target/livephotos-1.0-SNAPSHOT.jar <folder>`
 - Build the drag-and-drop macOS app (macOS only): `mvn package -Pmacos-app` → `target/app/LivePhotos.app`.
-  The `macos-app` profile uses `org.panteleyev:jpackage-maven-plugin` with `--resource-dir src/main/jpackage`.
+  The `macos-app` profile uses `org.panteleyev:jpackage-maven-plugin` with `--resource-dir src/main/jpackage`. It also passes `-Dlivephotos.gui=true` via `<javaOptions>` so the app opens the window.
 
 ## Java coding style
 

@@ -128,7 +128,12 @@
                                     </addModules>
                                     <!-- Supplies the custom Info.plist that accepts folders. -->
                                     <resourceDir>${project.basedir}/src/main/jpackage</resourceDir>
-                                    <destination>${project.build.directory}/app</destination>                                </configuration>
+                                    <destination>${project.build.directory}/app</destination>
+                                    <!-- Tells Main it was launched as the app, so it opens the window. -->
+                                    <javaOptions>
+                                        <option>-Dlivephotos.gui=true</option>
+                                    </javaOptions>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
