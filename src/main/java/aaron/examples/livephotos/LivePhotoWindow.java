@@ -23,6 +23,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -201,6 +202,12 @@ final class LivePhotoWindow {
                 processAll(files);
                 return true;
             } catch (final UnsupportedFlavorException | IOException e) {
+                final String reason = e.getMessage() != null ? e.getMessage() : e.toString();
+                // Show the dialog after the drop finishes, so the modal dialog doesn't hold up
+                // the drag-and-drop operation.
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame,
+                        "Could not read the dropped items:\n" + reason,
+                        "Drop Failed", JOptionPane.ERROR_MESSAGE));
                 return false;
             }
         }
