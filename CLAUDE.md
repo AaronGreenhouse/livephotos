@@ -23,7 +23,7 @@ The program currently only lists the matching files. Deleting them is planned (s
 
 ## Build and test
 
-- Java 25+ (compiled with `maven.compiler.release` 25), Maven, JUnit Jupiter 5.
+- Java 26+ (compiled with `maven.compiler.release` 26), Maven, JUnit Jupiter 5.
 - Maven is installed at `~/Applications/apache-maven-3.10.0/bin/mvn` and may not be on `PATH`.
 - Run tests: `mvn test`
 - Run the program: `mvn package && java -jar target/livephotos-1.0-SNAPSHOT.jar <folder>`
