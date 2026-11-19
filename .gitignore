@@ -1,3 +1,6 @@
 target/
 .DS_Store
 .vscode/settings.json
+
+# Personal notes, not part of the project
+local-notes/
