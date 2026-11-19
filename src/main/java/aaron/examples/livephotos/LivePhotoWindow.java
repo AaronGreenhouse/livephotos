@@ -58,12 +58,17 @@ final class LivePhotoWindow {
         output = new JTextArea();
         output.setEditable(false);
         output.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
-        output.setTransferHandler(new FolderDropHandler());
 
         status = new JLabel(HINT);
         status.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         frame = new JFrame("Live Photos");
+        // The text area needs the handler itself because it replaces its built-in one.
+        // The root pane takes drops everywhere else, such as on the hint label, since a
+        // drop goes to the innermost component under the cursor that accepts drops.
+        final FolderDropHandler dropHandler = new FolderDropHandler();
+        output.setTransferHandler(dropHandler);
+        frame.getRootPane().setTransferHandler(dropHandler);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(status, BorderLayout.NORTH);
         frame.add(new JScrollPane(output), BorderLayout.CENTER);
