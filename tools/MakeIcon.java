@@ -17,16 +17,35 @@ import java.nio.file.Path;
 import javax.imageio.ImageIO;
 
 /**
- * Draws the app icon: a photo print in front of a film frame, with the film
- * crossed out, because the app finds the video halves of live photos so they
- * can be removed. Writes every size macOS needs into an .iconset folder;
- * make-icon.sh then packs it into src/main/jpackage/LivePhotos.icns.
+ * Draws the app icon: a photo print with a green checkmark, and a three-frame
+ * film strip of the same scene crossed out, because the app finds the video
+ * halves of live photos so they can be removed. Writes every size macOS needs
+ * into an .iconset folder; make-icon.sh then packs it into
+ * src/main/jpackage/LivePhotos.icns.
  *
  * Run with: java tools/MakeIcon.java <output.iconset>
  */
 public final class MakeIcon {
     /** Everything is drawn on a 1024 x 1024 canvas and scaled to each size. */
     private static final double CANVAS = 1024;
+
+    /**
+     * The photo print's bounds before it is tilted, and its tilt in degrees. The
+     * photo and the film are kept apart so the kept photo and the deleted film
+     * read as two separate things.
+     */
+    private static final double PHOTO_X = 180;
+    private static final double PHOTO_Y = 170;
+    private static final double PHOTO_W = 380;
+    private static final double PHOTO_H = 320;
+    private static final double PHOTO_TILT = -8;
+
+    /** The film strip's bounds before it is tilted, and its tilt in degrees. */
+    private static final double FILM_X = 280;
+    private static final double FILM_Y = 605;
+    private static final double FILM_W = 560;
+    private static final double FILM_H = 230;
+    private static final double FILM_TILT = 8;
 
     public static void main(final String[] args) throws IOException {
         final Path out = Path.of(args[0]);
@@ -53,93 +72,147 @@ public final class MakeIcon {
         // Background tile, using Apple's icon grid: an 824-unit rounded square, centered.
         final Shape tile = new RoundRectangle2D.Double(100, 100, 824, 824, 370, 370);
         shadow(g, tile, 12, 28, 0.03f);
-        g.setPaint(new GradientPaint(0, 100, new Color(0x6FD3FF), 0, 924, new Color(0x2F6FE0)));
+        g.setColor(new Color(0xA6D6F5));
         g.fill(tile);
 
         final Graphics2D clip = (Graphics2D) g.create();
         clip.clip(tile);
-        drawFilm(clip);
         drawPhoto(clip);
-        drawCross(clip);
+        drawFilm(clip);
         clip.dispose();
     }
 
-    /** A dark film frame with sprocket holes and a play symbol, tilted, at the back right. */
+    /** A white-bordered photo print of a sunny landscape, tilted, at the back upper left. */
+    private static void drawPhoto(final Graphics2D g0) {
+        final Graphics2D g = (Graphics2D) g0.create();
+        g.rotate(Math.toRadians(PHOTO_TILT), PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2);
+        final Shape print = new RoundRectangle2D.Double(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H, 20, 20);
+        shadow(g, print, 22, 14, 0.04f);
+        g.setColor(Color.WHITE);
+        g.fill(print);
+
+        // The picture inside the white border, which is wider at the bottom like a print.
+        // It is the same moment as the film's middle frame.
+        drawScene(g, PHOTO_X + 24, PHOTO_Y + 24, PHOTO_X + PHOTO_W - 24, PHOTO_Y + PHOTO_H - 54,
+                SUN_PATH[1][0], SUN_PATH[1][1]);
+
+        // A green checkmark badge on the top-right corner: this is the one that is kept.
+        drawCheckBadge(g, PHOTO_X + PHOTO_W - 30, PHOTO_Y + 30, 58);
+        g.dispose();
+    }
+
+    /**
+     * The sun's center in each of the film's three frames, as fractions of the
+     * picture's width and height. The sun rises from frame to frame, so the strip
+     * reads as a short video; the photo shows the middle frame, the way a live
+     * photo's still image is one moment from its video.
+     */
+    private static final double[][] SUN_PATH = {{0.18, 0.40}, {0.25, 0.27}, {0.32, 0.16}};
+
+    /**
+     * Draws the landscape (sky, sun, two hills) filling the given rectangle, with the
+     * sun centered at ({@code sunX}, {@code sunY}) as fractions of the width and height.
+     * Everything is placed by fractions, so the scene fits both the photo and the
+     * differently shaped film frames.
+     */
+    private static void drawScene(final Graphics2D g0, final double left, final double top,
+            final double right, final double bottom, final double sunX, final double sunY) {
+        final double w = right - left;
+        final double h = bottom - top;
+        final Graphics2D p = (Graphics2D) g0.create();
+        final Shape picture = new RoundRectangle2D.Double(left, top, w, h, 0.06 * h, 0.06 * h);
+        p.clip(picture);
+        p.setPaint(new GradientPaint(0, (float) top, new Color(0x8ED8FF),
+                0, (float) bottom, new Color(0xD8F2FF)));
+        p.fill(picture);
+
+        final double sun = 0.27 * h;
+        p.setColor(new Color(0xFFCC33));
+        p.fill(new Ellipse2D.Double(left + sunX * w - sun / 2, top + sunY * h - sun / 2, sun, sun));
+
+        final Path2D farHill = new Path2D.Double();
+        farHill.moveTo(left, bottom - 0.25 * h);
+        farHill.lineTo(left + 0.28 * w, bottom - 0.70 * h);
+        farHill.lineTo(left + 0.52 * w, bottom - 0.37 * h);
+        farHill.lineTo(left + 0.74 * w, bottom - 0.62 * h);
+        farHill.lineTo(right, bottom - 0.25 * h);
+        farHill.lineTo(right, bottom + 1);
+        farHill.lineTo(left, bottom + 1);
+        farHill.closePath();
+        p.setColor(new Color(0x4CAF6A));
+        p.fill(farHill);
+
+        final Path2D nearHill = new Path2D.Double();
+        nearHill.moveTo(left, bottom - 0.12 * h);
+        nearHill.quadTo(left + 0.36 * w, bottom - 0.41 * h, right, bottom - 0.10 * h);
+        nearHill.lineTo(right, bottom + 1);
+        nearHill.lineTo(left, bottom + 1);
+        nearHill.closePath();
+        p.setColor(new Color(0x2E8B4E));
+        p.fill(nearHill);
+        p.dispose();
+    }
+
+    /** A green circle with a white checkmark, centered on (cx, cy), outlined in white. */
+    private static void drawCheckBadge(final Graphics2D g0, final double cx, final double cy, final double r) {
+        final Graphics2D g = (Graphics2D) g0.create();
+        final Shape outer = new Ellipse2D.Double(cx - r - 8, cy - r - 8, 2 * (r + 8), 2 * (r + 8));
+        shadow(g, outer, 10, 6, 0.04f);
+        g.setColor(Color.WHITE);
+        g.fill(outer);
+        g.setColor(new Color(0x34C759));
+        g.fill(new Ellipse2D.Double(cx - r, cy - r, 2 * r, 2 * r));
+
+        final Path2D check = new Path2D.Double();
+        check.moveTo(cx - 0.45 * r, cy + 0.02 * r);
+        check.lineTo(cx - 0.12 * r, cy + 0.35 * r);
+        check.lineTo(cx + 0.48 * r, cy - 0.33 * r);
+        g.setStroke(new BasicStroke((float) (0.24 * r), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.setColor(Color.WHITE);
+        g.draw(check);
+        g.dispose();
+    }
+
+    /**
+     * A dark three-frame film strip with sprocket holes, tilted, at the front lower
+     * right, crossed out by a red X centered on the strip.
+     */
     private static void drawFilm(final Graphics2D g0) {
         final Graphics2D g = (Graphics2D) g0.create();
-        g.rotate(Math.toRadians(10), 620, 380);
-        final Shape strip = new RoundRectangle2D.Double(390, 220, 460, 320, 36, 36);
+        final double cx = FILM_X + FILM_W / 2;
+        final double cy = FILM_Y + FILM_H / 2;
+        g.rotate(Math.toRadians(FILM_TILT), cx, cy);
+        final Shape strip = new RoundRectangle2D.Double(FILM_X, FILM_Y, FILM_W, FILM_H, 36, 36);
         shadow(g, strip, 18, 10, 0.035f);
         g.setColor(new Color(0x1F1F24));
         g.fill(strip);
 
         // Sprocket holes along the top and bottom edges.
         g.setColor(new Color(0xE8E8EE));
-        for (int x = 418; x < 830; x += 58) {
-            g.fill(new RoundRectangle2D.Double(x, 238, 30, 26, 8, 8));
-            g.fill(new RoundRectangle2D.Double(x, 496, 30, 26, 8, 8));
+        for (double x = FILM_X + 20; x + 26 <= FILM_X + FILM_W - 16; x += 48) {
+            g.fill(new RoundRectangle2D.Double(x, FILM_Y + 14, 26, 24, 7, 7));
+            g.fill(new RoundRectangle2D.Double(x, FILM_Y + FILM_H - 38, 26, 24, 7, 7));
         }
 
-        // The picture area, with a play triangle.
-        g.setPaint(new GradientPaint(0, 282, new Color(0x5B5F6E), 0, 478, new Color(0x3A3D48)));
-        g.fill(new RoundRectangle2D.Double(418, 282, 404, 196, 16, 16));
-        final Path2D play = new Path2D.Double();
-        play.moveTo(588, 324);
-        play.lineTo(588, 436);
-        play.lineTo(680, 380);
-        play.closePath();
-        g.setColor(new Color(255, 255, 255, 220));
-        g.fill(play);
+        // Three frames side by side, each showing the photo's scene a moment apart.
+        final double inset = 20;
+        final double gap = 14;
+        final double frameTop = FILM_Y + 50;
+        final double frameH = FILM_H - 100;
+        final double frameW = (FILM_W - 2 * inset - 2 * gap) / 3;
+        for (int i = 0; i < 3; i++) {
+            final double x = FILM_X + inset + i * (frameW + gap);
+            drawScene(g, x, frameTop, x + frameW, frameTop + frameH, SUN_PATH[i][0], SUN_PATH[i][1]);
+        }
+
+        // Drawn in the strip's tilted coordinates, so the X stays centered on it.
+        drawCross(g, cx, cy, 125);
         g.dispose();
     }
 
-    /** A white-bordered photo print of a sunny landscape, tilted, at the front left. */
-    private static void drawPhoto(final Graphics2D g0) {
+    /** A red X centered on (cx, cy), with a white outline so it reads on any color. */
+    private static void drawCross(final Graphics2D g0, final double cx, final double cy, final double r) {
         final Graphics2D g = (Graphics2D) g0.create();
-        g.rotate(Math.toRadians(-8), 410, 640);
-        final Shape print = new RoundRectangle2D.Double(200, 470, 420, 350, 20, 20);
-        shadow(g, print, 22, 14, 0.04f);
-        g.setColor(Color.WHITE);
-        g.fill(print);
-
-        final Shape picture = new RoundRectangle2D.Double(226, 496, 368, 266, 8, 8);
-        final Graphics2D p = (Graphics2D) g.create();
-        p.clip(picture);
-        p.setPaint(new GradientPaint(0, 496, new Color(0x8ED8FF), 0, 762, new Color(0xD8F2FF)));
-        p.fill(picture);
-        p.setColor(new Color(0xFFCC33));
-        p.fill(new Ellipse2D.Double(480, 524, 76, 76));
-
-        final Path2D farHill = new Path2D.Double();
-        farHill.moveTo(226, 700);
-        farHill.lineTo(330, 590);
-        farHill.lineTo(420, 670);
-        farHill.lineTo(500, 610);
-        farHill.lineTo(600, 700);
-        farHill.lineTo(600, 770);
-        farHill.lineTo(226, 770);
-        farHill.closePath();
-        p.setColor(new Color(0x4CAF6A));
-        p.fill(farHill);
-
-        final Path2D nearHill = new Path2D.Double();
-        nearHill.moveTo(226, 730);
-        nearHill.quadTo(360, 660, 600, 735);
-        nearHill.lineTo(600, 770);
-        nearHill.lineTo(226, 770);
-        nearHill.closePath();
-        p.setColor(new Color(0x2E8B4E));
-        p.fill(nearHill);
-        p.dispose();
-        g.dispose();
-    }
-
-    /** A red X over the exposed part of the film, with a white outline so it reads on any color. */
-    private static void drawCross(final Graphics2D g0) {
-        final Graphics2D g = (Graphics2D) g0.create();
-        final double cx = 690;
-        final double cy = 340;
-        final double r = 130;
         final Path2D cross = new Path2D.Double();
         cross.moveTo(cx - r, cy - r);
         cross.lineTo(cx + r, cy + r);
