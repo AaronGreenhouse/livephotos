@@ -118,3 +118,238 @@ I left [claude-prompt-log.md](claude-prompt-log.md) out, so it's the only uncomm
 - The commit includes both the drawing code and the `.icns` file built from it. Usually you don't commit generated files, but here the jpackage build reads the `.icns` directly and doesn't run `make-icon.sh`. Committing it means the app builds from a fresh clone without running the script first.
 - Because the hook keeps adding to the log, it will always show as modified. It makes sense to commit it occasionally, such as at the end of a session.
 `─────────────────────────────────────────────────`
+
+## 2026-11-21 19:10 EST
+
+### Prompt
+
+<ide_opened_file>The user opened the file /Users/aaron/VSCode Examples/livephotos/local-notes/code-review-findings.md in the IDE. This may or may not be related to the current task.</ide_opened_file>
+the file local-notes/code-review-findings.md contains the results of a "/code-review" action in Markdown format.  Can you read the file, and for each numbered section create a new GitHub issue
+
+### Response
+
+I created six GitHub issues in AaronGreenhouse/livephotos, one for each numbered section of the review file:
+
+| # | Issue | Label |
+|---|---|---|
+| [#2](https://github.com/AaronGreenhouse/livephotos/issues/2) | Runtime exceptions from a drop still fail silently | bug |
+| [#3](https://github.com/AaronGreenhouse/livephotos/issues/3) | An empty exception message gives a dialog with no reason | bug |
+| [#4](https://github.com/AaronGreenhouse/livephotos/issues/4) | Errors are reported in two different ways | enhancement |
+| [#5](https://github.com/AaronGreenhouse/livephotos/issues/5) | The root pane shares the text area's copy behavior | bug |
+| [#6](https://github.com/AaronGreenhouse/livephotos/issues/6) | Repeated failures stack modal dialogs | bug |
+| [#7](https://github.com/AaronGreenhouse/livephotos/issues/7) | A failed paste is reported as a failed drop | bug |
+
+Each issue contains:
+- the section's text copied from the file;
+- a note that it comes from the `/code-review` of commit 3e78d23;
+- a link to the code at that commit.
+
+I gave #4 the `enhancement` label because the code isn't broken there; it reports errors in two different ways. The other five got `bug`.
+
+Your existing issue [#1](https://github.com/AaronGreenhouse/livephotos/issues/1), "Ask Claude Code to add the most recent code-review comments as issues", asks for exactly this. I haven't closed it. Should I close it with a comment linking to #2–#7?
+
+`★ Insight ─────────────────────────────────────`
+- The links point to commit 3e78d23, not to `main`. A link to a branch shows whatever is at that line number today, so it drifts as the file changes. A link to a commit always shows the code the review was about.
+- Some of these overlap. #4 suggests logging drop failures in the output area, and doing that would also fix #6, since there would be no dialogs to stack up. Deciding #4 first would settle part of #6.
+`─────────────────────────────────────────────────`
+
+## 2026-11-21 19:12 EST
+
+### Prompt
+
+yes, close #1 with a comment
+
+### Response
+
+I closed [#1](https://github.com/AaronGreenhouse/livephotos/issues/1) with a comment that lists the new issues, #2 through #7. #1 now shows as closed.
+
+`★ Insight ─────────────────────────────────────`
+GitHub turns `#2` written in a comment into a link. It also adds a "mentioned in" note to each of #2–#7 that links back to #1, so you can get from any of the findings to the request that created it.
+`─────────────────────────────────────────────────`
+
+## 2026-11-21 19:34 EST
+
+### Prompt
+
+<ide_opened_file>The user opened the file /Users/aaron/VSCode Examples/livephotos/src/main/java/aaron/examples/livephotos/LivePhotoWindow.java in the IDE. This may or may not be related to the current task.</ide_opened_file>
+
+
+<pasted_content id="d809">
+Create a personal code-improver subagent in ~/.claude/agents/ that scans
+files and suggests improvements for readability, performance, and best
+practices. It should explain each issue, show the current code, and
+provide an improved version. Make it read-only and have it use Sonnet.
+</pasted_content id="d809">
+
+### Response
+
+I created the subagent at [~/.claude/agents/code-improver.md](/Users/aaron/.claude/agents/code-improver.md). It's in your personal folder, so it's available in all your projects, not just this one.
+
+- **Read-only:** it can only use the Read, Grep and Glob tools. Without Edit, Write or Bash, it has no way to change files or run commands.
+- **Sonnet:** set with `model: sonnet`.
+- **Report:** each finding gives a category (readability, performance or best practice), a severity, an explanation of the issue, the current code with its line number, and an improved version you can paste in. The report ends with a short summary and the changes it would make first.
+- **Project rules:** before reviewing, it looks for CLAUDE.md and style config files. Here that means it will also flag variables that could be `final` but aren't.
+- **Restraint:** it's told to leave out pure matters of taste and to say briefly when a file is already in good shape, so reports don't fill up with nitpicks.
+
+Claude Code may only notice the new agent in a new session. To use it, ask something like "use the code-improver agent on LivePhotoWindow.java".
+
+`★ Insight ─────────────────────────────────────`
+- Leaving out Bash matters more than it seems. A shell can write files (`sed -i`, `>`), so an agent that can run commands isn't truly read-only. Allowing only Read, Grep and Glob means the tool list itself guarantees it can't change anything.
+- Claude reads the `description` field to decide when to hand a task to the agent. Phrases like "suggest refactorings" and "review code quality" in it make that more likely when you ask in your own words, without naming the agent.
+`─────────────────────────────────────────────────`
+
+## 2026-11-21 19:39 EST
+
+### Prompt
+
+use the code-improver agent on LivePhotoWindow.java
+
+### Response
+
+The review of `LivePhotoWindow.java` is running in the background, and I'll pass on its findings when it's done.
+
+Next session, `code-improver` will be on the list of agents, and asking for it by name will work directly.
+
+## 2026-11-21 19:40 EST
+
+### Prompt
+
+<task-notification>
+<task-id>ad6b585162cbef354</task-id>
+<tool-use-id>toolu_01DZQzLFvatevZFugHBxhDSe</tool-use-id>
+<output-file>/private/tmp/claude-502/-Users-aaron-VSCode-Examples-livephotos/99f49681-428f-4bf4-87e3-2cf7aafd75cd/tasks/ad6b585162cbef354.output</output-file>
+<status>completed</status>
+<summary>Agent "Review LivePhotoWindow.java" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Report: `/Users/aaron/VSCode Examples/livephotos/src/main/java/aaron/examples/livephotos/LivePhotoWindow.java`**
+
+I stayed read-only, as instructed. Grep was not available in this session and Bash was off limits, so I could not search for other callers of `formatResults`. I read `LivePhotoUtils.java` to check how it behaves. Only one finding below is worth acting on. The file is otherwise in good shape.
+
+### Unexpected exceptions in the search task drop the rest of a batch — `LivePhotoWindow.java:143-153` and `:126-139`
+**Category:** Best practice
+**Severity:** Medium
+
+**Issue:** `describe` catches only `IOException | UncheckedIOException`. `findLivePhotoVideos` calls `Files.list` and `Files.isRegularFile`, which can also throw `SecurityException`. If any other `RuntimeException` is thrown, it escapes the `for` loop in the `searcher` task. The remaining dropped folders in that batch are then skipped without any message in the window. The exception only goes to the default uncaught-exception handler, which prints to stderr, so a macOS app user never sees it. The `finally` block does reset the "Thinking…" label, so the UI does not hang.
+
+**Current code:**
+```java
+        try {
+            return formatResults(folder, LivePhotoUtils.findLivePhotoVideos(folder));
+        } catch (final IOException | UncheckedIOException e) {
+            return "Error reading " + folder + ": " + e.getMessage() + "\n\n";
+        }
+```
+
+**Improved version:**
+```java
+        try {
+            return formatResults(folder, LivePhotoUtils.findLivePhotoVideos(folder));
+        } catch (final IOException | RuntimeException e) {
+            // RuntimeException covers UncheckedIOException and SecurityException; a failure
+            // on one folder must not stop the rest of the batch.
+            return "Error reading " + folder + ": " + e + "\n\n";
+        }
+```
+
+**Notes:**
+- Using `e` instead of `e.getMessage()` also fixes a related problem. `getMessage()` can be null, which would print "Error reading X: null". `NoSuchFileException`, for example, usually carries the path as its message, but other exceptions may not. `importData` at line 205 already guards against null this way.
+- The wording of the error text changes slightly, for example to "java.nio.file.AccessDeniedException: /path". If you prefer the old wording, keep `e.getMessage()` with the null guard from line 205.
+
+### Minor observations, no change recommended
+- **Project conventions:** `final` is used everywhere it applies, including lambda and catch parameters. The mutable `pending` field is correctly not final. I found no violations of the CLAUDE.md rule.
+- **Swing threading:** this is handled correctly. Window creation, `pending` updates, and appends all happen on the Swing thread, and the ordering comments hold up.
+- **Per-file `invokeLater` in `processAll`:** it posts one event per file. That is fine at this scale, so I would leave it.
+
+### Summary
+- **Findings:** 0 Readability, 0 Performance, 1 Best practice (Medium).
+- **What I would change first:** the single change above, broadening the catch in `describe`.</result>
+<usage><subagent_tokens>38875</subagent_tokens><tool_uses>4</tool_uses><duration_ms>23376</duration_ms></usage>
+</task-notification>
+
+### Response
+
+The review found one change worth making in [LivePhotoWindow.java](src/main/java/aaron/examples/livephotos/LivePhotoWindow.java). It rated everything else as fine.
+
+**Folder errors other than I/O errors can stop a batch of drops partway** ([LivePhotoWindow.java:143-153](src/main/java/aaron/examples/livephotos/LivePhotoWindow.java#L143-L153); best practice, medium):
+- **Problem:** `describe` catches only `IOException | UncheckedIOException`. If a folder throws any other `RuntimeException`, such as a `SecurityException`, it escapes the background search loop. The remaining folders in that drop are skipped, and the error only goes to stderr, which an app user never sees. The "Thinking…" label still resets, so the window doesn't hang.
+- **Suggested fix:** catch `IOException | RuntimeException`, and print `e` rather than `e.getMessage()`, which can be null. The trade-off is slightly different wording, such as `java.nio.file.AccessDeniedException: /path`.
+
+The review also checked:
+- **`final` rule:** CLAUDE.md asks for `final` wherever possible, and no variable that could be `final` is missing it.
+- **Swing threading:** correct.
+- **Results updates:** it posts one Swing event per file, which it said is fine at this size.
+
+This finding isn't in issues #2–#7. [#2](https://github.com/AaronGreenhouse/livephotos/issues/2) is the same kind of problem, a `RuntimeException` that isn't caught, but in `importData`, the drop handler. This one is in the folder search that runs after a drop is read. The two would make sense to fix together.
+
+The agent couldn't use Grep, so it didn't search for other callers of `formatResults`. It read the file and `LivePhotoUtils.java` instead, so the finding still stands.
+
+`code-improver` has loaded now, so next time asking for it by name will work directly.
+
+Should I make the fix, open an issue for it, or leave it?
+
+`★ Insight ─────────────────────────────────────`
+`UncheckedIOException` is itself a `RuntimeException`, so `IOException | RuntimeException` already covers both of the exceptions caught today. Java won't compile a multi-catch that names an exception alongside its own superclass, so writing all three would be an error.
+`─────────────────────────────────────────────────`
+
+## 2026-11-21 19:43 EST
+
+### Prompt
+
+Update the code improver agent (1) to use mustard yellow text on a black background, and (2) to run whenever I ask to run "/code-review"
+
+### Response
+
+I made both changes, but I haven't been able to check the second one in a real `/code-review` yet.
+
+**1. Color:** I set `color: yellow` in [code-improver.md](/Users/aaron/.claude/agents/code-improver.md). Subagents can only use a few named colors, which set the color of the agent's label in the Claude Code interface. There's no option for a custom shade like mustard, or for a background color, so yellow is the closest available. How it looks depends on your terminal's color theme. If your theme can make yellow a darker, mustard-like shade, that would get you closer.
+
+**2. Running with `/code-review`:** I added a hook to your personal settings, `~/.claude/settings.json`. When a prompt starts with `/code-review`, the script `~/.claude/hooks/code-review-improver.sh` adds a note asking Claude to also run `code-improver` on the same code and report its suggestions after the review findings.
+- **Tested so far:** I fed the script sample prompts directly. `/code-review` and `/code-review high 12` trigger it, while `/code-reviewer x` and "please /code-review" don't. The settings file is valid.
+- **Not yet tested:** I couldn't trigger a real `/code-review` from here, so I can't confirm the hook runs on a slash command. Next time you run one, check that a code-improver section appears after the review findings. If it doesn't, tell me.
+
+Your existing hook that writes the prompt log is unaffected; the two hooks run side by side. Both changes are in your personal folder, so they apply in all your projects, not just this one. You can see or turn off the new hook with `/hooks`.
+
+`★ Insight ─────────────────────────────────────`
+- The hook can't start the agent itself, since hooks only run shell commands. Instead, it uses `additionalContext`, which adds a note to what Claude reads along with your prompt, and Claude then launches the agent. The script checks your prompt and adds the note only for `/code-review`, so other prompts don't run the agent.
+- `/code-review` runs Claude's built-in review, which you can't modify. The hook adds the agent alongside it, so you keep the built-in review and its flags such as `--fix`.
+`─────────────────────────────────────────────────`
+
+## 2026-11-21 20:38 EST
+
+### Prompt
+
+Add the finding from running the code-improver subagent as a comment to github issue #2
+
+### Response
+
+I added the code-improver finding to [#2 as a comment](https://github.com/AaronGreenhouse/livephotos/issues/2#issuecomment-7072344213).
+
+The comment covers:
+- **The finding:** a `RuntimeException` such as a `SecurityException` can escape the folder search. The remaining folders in that drop are then skipped, with no message in the window.
+- **The code:** the current code, the suggested fix, and the notes on its trade-offs.
+- **The link to #2:** it's the same kind of problem as #2, but in `describe` rather than `importData`, so the two would make sense to fix together.
+- **Links to the code:** they point to commit 3e78d23, the same one #2 links to; I left the line numbers as they are because the file hasn't changed since then.
+
+`★ Insight ─────────────────────────────────────`
+- The comment mentions #3 because it's the same gap with null messages, which also refers back to #3. Anyone fixing these will see that one change in how error text is built could fix both.
+- #2, #3 and this finding all come down to how the window reports a failure. A single shared method for error reporting would fix them all in one place, and it would also settle #4, which is about errors appearing in two places.
+`─────────────────────────────────────────────────`
+
+## 2026-11-21 20:40 EST
+
+### Prompt
+
+Please add the insight you just reported to github issue #2 as well.
+
+### Response
+
+I added the insight to [#2 as a second comment](https://github.com/AaronGreenhouse/livephotos/issues/2#issuecomment-7072365430). It sits below the code-improver comment.
+
+I reworded it slightly so it makes sense to someone reading the issue on its own:
+- I added that an empty message causes the same problem as a null one.
+- I gave an example fix: use the exception's class name when there's no message.
+- I said what the "two places" in #4 are: the dialog and the output area.
+
+`★ Insight ─────────────────────────────────────`
+Because the comment mentions #3 and #4, GitHub adds a link back to #2 on each of them. That links the four related problems together, so whoever picks up any one of them can find the plan to fix them together.
+`─────────────────────────────────────────────────`
