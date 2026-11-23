@@ -11,11 +11,11 @@ Matching rules (covered by tests — keep them passing):
 - Only the given folder is searched (not recursive).
 - Only `.mov` files are ever returned; never `.heic` files, and never a `.mov` without a matching `.heic`.
 
-The program currently only lists the matching files. Deleting them is planned (see README.md) but not implemented.
+The program removes the matching files by moving them into a `Live Videos` subfolder of the searched folder (`LivePhotoUtils.moveLivePhotoVideos`), rather than deleting them, so a mistake can be undone. Both the CLI and the app do this immediately, with no confirmation. The subfolder is only created when there is something to move. Because the search is not recursive, files already moved are not found again.
 
 ## Layout
 
-- `src/main/java/aaron/examples/livephotos/LivePhotoUtils.java` — `findLivePhotoVideos(Path)`, the matching logic.
+- `src/main/java/aaron/examples/livephotos/LivePhotoUtils.java` — `findLivePhotoVideos(Path)`, the matching logic, and `moveLivePhotoVideos(Path)`, which moves the matches into `Live Videos`.
 - `src/main/java/aaron/examples/livephotos/Main.java` — entry point: CLI with a folder argument; with no arguments prints usage and exits 1, unless `-Dlivephotos.gui=true` is set (the macOS app sets it), which opens `LivePhotoWindow`.
 - `src/main/java/aaron/examples/livephotos/LivePhotoWindow.java` — Swing window for the macOS app; receives folders dropped on the app icon (`Desktop.setOpenFileHandler`) or the window.
 - `src/test/java/aaron/examples/livephotos/LivePhotoUtilsTest.java` — JUnit 5 tests.
