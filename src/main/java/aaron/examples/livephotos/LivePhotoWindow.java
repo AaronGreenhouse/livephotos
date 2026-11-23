@@ -32,7 +32,9 @@ import javax.swing.TransferHandler;
 /**
  * Window used when the program runs as a macOS app. Folders dropped onto the
  * app's icon (delivered by the OS as "open files" events) or onto the window
- * itself are searched, and the results are shown in the window.
+ * itself are searched, their live photo videos are moved into a
+ * {@value LivePhotoUtils#LIVE_VIDEOS_FOLDER} subfolder, and the results are
+ * shown in the window.
  */
 final class LivePhotoWindow {
     private static final String HINT = "Drop a folder onto this window or onto the app icon.";
@@ -146,24 +148,27 @@ final class LivePhotoWindow {
         }
         final Path folder = file.toPath();
         try {
-            return formatResults(folder, LivePhotoUtils.findLivePhotoVideos(folder));
+            return formatResults(folder, LivePhotoUtils.moveLivePhotoVideos(folder));
         } catch (final IOException | UncheckedIOException e) {
-            return "Error reading " + folder + ": " + e.getMessage() + "\n\n";
+            // e.toString() includes the exception type, which says more than the message
+            // alone for errors like FileAlreadyExistsException whose message is just a path.
+            return "Error processing " + folder + ": " + e + "\n\n";
         }
     }
 
     /**
-     * Returns the text shown in the window for one searched folder: a heading
-     * line, each video's file name indented two spaces, then the total count.
+     * Returns the text shown in the window for one processed folder: a heading
+     * line, each moved video's file name indented two spaces, then the total count.
      */
-    static String formatResults(final Path folder, final List<Path> videos) {
+    static String formatResults(final Path folder, final List<Path> moved) {
         final StringBuilder sb = new StringBuilder();
         sb.append("Processing ").append(folder).append("…\n");
-        for (final Path video : videos) {
+        for (final Path video : moved) {
             sb.append("  ").append(video.getFileName()).append('\n');
         }
-        final int count = videos.size();
-        sb.append("Total: ").append(count).append(count == 1 ? " video file" : " video files").append("\n\n");
+        final int count = moved.size();
+        sb.append("Moved ").append(count).append(count == 1 ? " video file" : " video files")
+                .append(" to ").append(LivePhotoUtils.LIVE_VIDEOS_FOLDER).append("\n\n");
         return sb.toString();
     }
 

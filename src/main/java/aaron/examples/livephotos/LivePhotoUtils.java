@@ -22,6 +22,9 @@ public final class LivePhotoUtils {
     private static final String HEIC = "heic";
     private static final String MOV = "mov";
 
+    /** Name of the subfolder that {@link #moveLivePhotoVideos} moves videos into. */
+    public static final String LIVE_VIDEOS_FOLDER = "Live Videos";
+
     private LivePhotoUtils() {
         // Private constructor prevents instantiation.
     }
@@ -60,5 +63,39 @@ public final class LivePhotoUtils {
         }
         result.sort(null);
         return result;
+    }
+
+    /**
+     * Moves the live photo videos found by {@link #findLivePhotoVideos} into the
+     * {@value #LIVE_VIDEOS_FOLDER} subfolder of {@code folder}, creating it if
+     * needed. The subfolder is not created when there is nothing to move. Because
+     * the search is not recursive, videos already moved are not found again.
+     * <p>
+     * Stops at the first file that cannot be moved and throws; files moved
+     * before that stay in the subfolder.
+     *
+     * @return the new locations of the moved files, in the order they were moved
+     */
+    public static List<Path> moveLivePhotoVideos(final Path folder) throws IOException {
+        final List<Path> videos = findLivePhotoVideos(folder);
+        if (videos.isEmpty()) {
+            return List.of();
+        }
+        final Path targetDir = Files.createDirectories(folder.resolve(LIVE_VIDEOS_FOLDER));
+        final List<Path> moved = new ArrayList<>();
+        for (final Path video : videos) {
+            // Without REPLACE_EXISTING, Files.move throws rather than overwrite a file.
+            moved.add(Files.move(video, destinationFor(targetDir, video)));
+        }
+        return moved;
+    }
+
+    /**
+     * Returns where {@code video} should be moved to inside {@code targetDir}.
+     */
+    static Path destinationFor(final Path targetDir, final Path video) {
+        final Path fileName = video.getFileName();
+        // TODO(human): handle a file with this name already being in targetDir.
+        return targetDir.resolve(fileName);
     }
 }

@@ -353,3 +353,71 @@ I reworded it slightly so it makes sense to someone reading the issue on its own
 `★ Insight ─────────────────────────────────────`
 Because the comment mentions #3 and #4, GitHub adds a link back to #2 on each of them. That links the four related problems together, so whoever picks up any one of them can find the plan to fix them together.
 `─────────────────────────────────────────────────`
+
+## 2026-11-23 12:54 EST
+
+### Prompt
+
+<ide_opened_file>The user opened the file /Users/aaron/VSCode Examples/livephotos/src/main/java/aaron/examples/livephotos/LivePhotoWindow.java in the IDE. This may or may not be related to the current task.</ide_opened_file>
+The program does not yet delete the identified .mov files.  Let's make that change now.
+
+### Response
+
+The CLI and the app now move matching videos into a "Live Videos" subfolder instead of only listing them, and `mvn test` passes with the four new move tests. I haven't run the app or the CLI by hand yet.
+
+`★ Insight ─────────────────────────────────────`
+- **Moving is safe because the search doesn't recurse.** The "Live Videos" folder sits inside the folder being searched, but `findLivePhotoVideos` only looks at that one folder and only at regular files. So moved videos aren't found again (the `secondMoveFindsNothing` test checks this), and the subfolder itself is skipped.
+- **The move can't overwrite anything.** `Files.move` is called without `REPLACE_EXISTING`, so it throws `FileAlreadyExistsException` rather than overwrite a file. Within one volume the move is a fast rename, not a copy.
+- **A failure partway through doesn't undo earlier moves.** Each move is independent, so if one fails, the files already moved stay in "Live Videos" and the error is reported. Error messages now use `e.toString()` because a `FileAlreadyExistsException` message is only a file path, which on its own doesn't say what went wrong.
+`─────────────────────────────────────────────────`
+
+● **Learn by Doing**
+
+**Context:** The move logic, the CLI, the app and the tests are done. One decision is left: what happens when "Live Videos" already holds a file with the same name. This can really happen. For example, a later import from the phone may bring in another `IMG_0001.mov`, or someone may put `x.heic` and `x.mov` back after a move. Right now the program stops with `FileAlreadyExistsException`, so nothing is lost, but the user has to sort it out by hand.
+
+**Your Task:** In [LivePhotoUtils.java](src/main/java/aaron/examples/livephotos/LivePhotoUtils.java), implement `destinationFor(targetDir, video)` at the TODO(human). It should return the path the video is moved to.
+
+**Guidance:** Here are the options I see:
+- **Keep the current behavior:** return `targetDir.resolve(fileName)` and let the move fail. It's simplest and loudest.
+- **Pick a free name:** add a suffix such as `IMG_0001 (2).mov`, the way Finder does, and count up until `Files.exists` is false. Keep the original extension and its case.
+- **Skip duplicates:** this would need a way to tell the caller "don't move this one", for example by returning `null`, which also means changing `moveLivePhotoVideos`.
+
+Note that checking `Files.exists` and then moving isn't atomic. That's fine for a single-user tool, and since the move never overwrites, the worst case is an exception, not lost data. Keep everything `final` (CLAUDE.md asks for this). If you choose to rename, a test that creates a clash in `LivePhotoUtilsTest` would be good to add.
+
+## 2026-11-23 13:04 EST
+
+### Prompt
+
+<ide_opened_file>The user opened the file /Users/aaron/VSCode Examples/livephotos/src/main/java/aaron/examples/livephotos/LivePhotoUtils.java in the IDE. This may or may not be related to the current task.</ide_opened_file>
+I am not going to implement the TODO right now.
+
+### Response
+
+That's fine; you can leave the TODO for later. The code works as it is. If a video with the same name is already in "Live Videos", `Files.move` throws `FileAlreadyExistsException` instead of overwriting it. The CLI and the window both report that error, and files moved before it stay in "Live Videos", so nothing is lost.
+
+The `TODO(human)` comment is still in [LivePhotoUtils.java](src/main/java/aaron/examples/livephotos/LivePhotoUtils.java) as a reminder. I can change it to a plain TODO, or remove it if you'd rather keep failing on clashes. None of this has been committed yet.
+
+## 2026-11-23 13:07 EST
+
+### Prompt
+
+Tested command line and GUI versions.  Works as intended
+
+### Response
+
+Good to hear both versions work. The changes are still uncommitted on `8-implement-deletion`:
+
+- [LivePhotoUtils.java](src/main/java/aaron/examples/livephotos/LivePhotoUtils.java): `moveLivePhotoVideos`, `destinationFor` (with its TODO) and the `LIVE_VIDEOS_FOLDER` constant
+- [Main.java](src/main/java/aaron/examples/livephotos/Main.java) and [LivePhotoWindow.java](src/main/java/aaron/examples/livephotos/LivePhotoWindow.java): both now move files and report "Moved N …"
+- [LivePhotoUtilsTest.java](src/test/java/aaron/examples/livephotos/LivePhotoUtilsTest.java): four move tests
+- [CLAUDE.md](CLAUDE.md): describes the new behavior
+- `claude-prompt-log.md` was already modified before this work started.
+
+Do you want me to commit these and open a PR into `main`?
+
+## 2026-11-23 13:09 EST
+
+### Prompt
+
+<ide_opened_file>The user opened the file /Users/aaron/VSCode Examples/livephotos/src/main/java/aaron/examples/livephotos/LivePhotoUtils.java in the IDE. This may or may not be related to the current task.</ide_opened_file>
+yes, commit and open a PR; included claude-prompt-log

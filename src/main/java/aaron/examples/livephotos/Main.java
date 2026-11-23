@@ -7,8 +7,9 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Entry point. With a folder argument, lists the live-photo video files in
- * that folder on the console. With no arguments, prints a usage message and
+ * Entry point. With a folder argument, moves the live-photo video files in
+ * that folder into its {@value LivePhotoUtils#LIVE_VIDEOS_FOLDER} subfolder
+ * and lists their new locations on the console. With no arguments, prints a usage message and
  * exits with status 1, unless the program was launched as the macOS app
  * (which sets {@code -Dlivephotos.gui=true}); then it opens a window that
  * folders can be dropped onto.
@@ -37,13 +38,14 @@ public class Main {
         }
 
         try {
-            final List<Path> liveVideos = LivePhotoUtils.findLivePhotoVideos(folder);
-            for (final Path p : liveVideos) {
+            final List<Path> moved = LivePhotoUtils.moveLivePhotoVideos(folder);
+            for (final Path p : moved) {
                 System.out.println(p);
             }
-            System.out.println("Found " + liveVideos.size() + " live photo video file(s).");
+            System.out.println("Moved " + moved.size() + " live photo video file(s) to "
+                    + folder.resolve(LivePhotoUtils.LIVE_VIDEOS_FOLDER) + ".");
         } catch (final IOException e) {
-            System.err.println("Error reading folder: " + e.getMessage());
+            System.err.println("Error moving live photo videos: " + e);
             System.exit(2);
         }
     }
