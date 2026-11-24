@@ -68,7 +68,11 @@ public final class MakeIcon {
         ImageIO.write(image, "png", new File(file.toString()));
     }
 
-    private static void draw(final Graphics2D g) {
+    /**
+     * Draws the whole icon on a {@value #CANVAS}-unit square canvas. Also used by
+     * MakeSocialPreview, which scales and places it on a wider image.
+     */
+    static void draw(final Graphics2D g) {
         // Background tile, using Apple's icon grid: an 824-unit rounded square, centered.
         final Shape tile = new RoundRectangle2D.Double(100, 100, 824, 824, 370, 370);
         shadow(g, tile, 12, 28, 0.03f);

@@ -421,3 +421,34 @@ Do you want me to commit these and open a PR into `main`?
 
 <ide_opened_file>The user opened the file /Users/aaron/VSCode Examples/livephotos/src/main/java/aaron/examples/livephotos/LivePhotoUtils.java in the IDE. This may or may not be related to the current task.</ide_opened_file>
 yes, commit and open a PR; included claude-prompt-log
+
+## 2026-11-24 15:23 EST
+
+### Prompt
+
+I want an image to use for the project's github social preview and to use on the ReadMe page.  It should be derived from the icon used for the macOS application.
+
+### Response
+
+I made the image: [docs/social-preview.png](docs/social-preview.png). It's 1280×640, the size GitHub recommends for social previews, and about 170 KB. The app icon sits on a deep-blue background, with "Live Photos" and a one-line description beside it.
+
+- **README:** the image is now a banner at the top of [README.md](README.md).
+- **Generator:** [tools/MakeSocialPreview.java](tools/MakeSocialPreview.java) draws the image. It calls `MakeIcon.draw`, which I changed from `private` to package-private, so it uses the same drawing code as the app icon.
+- **Script:** [tools/make-icon.sh](tools/make-icon.sh) now rebuilds both the app icon and the preview. I ran it, and the `.icns` file came out byte-for-byte the same, so nothing changed in the app icon.
+- **CLAUDE.md:** the Layout section lists the new image and how it's made.
+
+**One step you have to do by hand:** GitHub has no API for setting the social preview. Upload `docs/social-preview.png` under the repo's **Settings → General → Social preview → Edit**. It won't appear on link cards until you do.
+
+`★ Insight ─────────────────────────────────────`
+- Since Java 22, the source launcher compiles other `.java` files in the same folder when they're needed. So `java tools/MakeSocialPreview.java` can use `MakeIcon` with no build step.
+- The icon is drawn on a fixed 1024-unit canvas, so adding it to the banner only takes a `translate` and a `scale` before calling `draw`. That's the same way it's already drawn at each icon size.
+- The text uses Helvetica Neue if it's installed and falls back to Java's default sans-serif otherwise, so the script still runs on a machine without it.
+`─────────────────────────────────────────────────`
+
+The changes aren't committed yet; they're on branch `10-create-a-project-logo`, along with your existing edit to `claude-prompt-log.md`. If you want different wording, the description is the `TAGLINE` array in the generator. Then rerun the script.
+
+## 2026-11-24 15:33 EST
+
+### Prompt
+
+commit and open a PR; include claude-prompt-log
